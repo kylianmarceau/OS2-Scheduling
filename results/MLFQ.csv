@@ -1,0 +1,39 @@
+patronID, drinkName, executionTime, waitingTime, responseTime, turnaroundTime, queueLevel
+0,B52,200,2,2,207,0
+1,Bloody Mary,70,0,0,75,0
+1,Pina Colada,100,0,0,105,1
+2,Draft Beer,50,1,1,56,0
+1,Draft Beer,50,58,58,113,2
+2,Cider,25,1,1,30,1
+1,Bloody Mary,70,1,1,77,2
+3,Vodka shot,20,0,0,21,0
+3,B52,200,1,1,201,1
+4,Draft Beer,50,81,81,132,0
+1,Cosmopolitan,65,188,188,257,2
+5,Cider,25,59,59,89,0
+4,Red Wine,25,0,0,27,1
+3,Draft Beer,50,170,170,225,2
+5,Pina Colada,100,1,1,102,1
+4,Tequila shot,20,25,25,51,2
+6,B52,200,16,16,221,0
+3,Martini,60,250,250,315,2
+6,Mojito,75,56,56,134,1
+7,Margarita,75,77,77,157,0
+4,White Wine,25,429,429,456,2
+6,Tequila shot,20,0,0,24,2
+6,Margarita,75,0,0,80,2
+4,Vodka shot,20,1,1,23,2
+4,Vodka shot,20,1,1,25,2
+6,Tequila shot,20,10,10,35,2
+6,White Wine,25,1,1,32,2
+8,Martini,60,1,1,66,0
+8,White Wine,25,0,0,30,1
+9,Margarita,75,0,0,77,0
+8,Cosmopolitan,65,3,3,73,2
+9,Bloody Mary,70,1,1,74,1
+8,Beer,25,31,31,61,2
+8,Tequila shot,20,0,0,24,2
+9,Cider,25,1,1,27,2
+8,Cosmopolitan,65,23,23,93,2
+8,Margarita,75,1,1,81,2
+8,White Wine,25,1,1,31,2

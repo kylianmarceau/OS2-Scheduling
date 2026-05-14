@@ -9,9 +9,10 @@
  3 = MLFQ with aging
  */
 
-
 package barScheduling;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.concurrent.ConcurrentHashMap;
@@ -332,10 +333,30 @@ public class Barman extends Thread {
     }
     
 //=NO CHANGE AREA ENDS=========================================================   
-      
     
     private void recordCompletedOrder(DrinkOrder order) throws IOException {
     	// THIS IS THE ONLY FUNCTION YOU MAY CHANGE
+
+        new File("results").mkdirs(); // creates directory if it doesnt exist yet
+
+        String filename = "results/" + schedulerName+".csv";
+        File file = new File(filename);
+        boolean isNew = !file.exists();
+
+        try(FileWriter file_writter = new FileWriter(file, true)){
+            if(isNew){
+                file_writter.write("patronID, drinkName, executionTime, waitingTime, responseTime, turnaroundTime, queueLevel\n");
+            }
+            file_writter.write(
+                order.getOrderer()+","+
+                order.getDrinkName()+","+
+                order.getExecutionTime()+","+
+                order.getWaitingTime()+","+
+                order.getResponseTime()+","+
+                order.getTurnaroundTime()+","+
+                order.getQueueLevel()+"\n"
+            );
+        }
     }
 
 }
