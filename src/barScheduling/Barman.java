@@ -345,16 +345,30 @@ public class Barman extends Thread {
 
         try(FileWriter file_writter = new FileWriter(file, true)){
             if(isNew){
-                file_writter.write("patronID, drinkName, executionTime, waitingTime, responseTime, turnaroundTime, queueLevel\n");
+                file_writter.write("runId,scheduler,noPatrons,switchTime,seed,patronID,drinkName,executionTime,arrivalTime,serviceStartTime,completionTime,waitingTime,responseTime,turnaroundTime,queueLevel\n");
             }
+
+            long simStartTime = SchedulingSimulation.simStartTime;
+            long arrivalTime = order.getArrivalTime() - simStartTime;
+            long serviceStartTime = order.getServiceStartTime() - simStartTime;
+            long completionTime = order.getCompletionTime() - simStartTime;
+
             file_writter.write(
-                order.getOrderer()+","+
-                order.getDrinkName()+","+
-                order.getExecutionTime()+","+
-                order.getWaitingTime()+","+
-                order.getResponseTime()+","+
-                order.getTurnaroundTime()+","+
-                order.getQueueLevel()+"\n"
+                SchedulingSimulation.runId + "," +
+                schedulerName + "," +
+                SchedulingSimulation.noPatrons + "," +
+                SchedulingSimulation.s + "," +
+                SchedulingSimulation.seed + "," +
+                order.getOrderer() + "," +
+                order.getDrinkName() + "," +
+                order.getExecutionTime() + "," +
+                arrivalTime + "," +
+                serviceStartTime + "," +
+                completionTime + "," +
+                order.getWaitingTime() + "," +
+                order.getResponseTime() + "," +
+                order.getTurnaroundTime() + "," +
+                order.getQueueLevel() + "\n"
             );
         }
     }
