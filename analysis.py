@@ -294,6 +294,70 @@ def build_scheduler_summary(run_summaries):
     return sorted(summaries, key=scheduler_sort_key)
 
 
+def build_overall_scheduler_metrics(rows):
+    groups = defaultdict(list)
+    for row in rows:
+        groups[row["scheduler"]].append(row)
+
+    summaries = []
+    for scheduler, scheduler_rows in groups.items():
+        waiting_times = [row["waitingTime"] for row in scheduler_rows]
+        response_times = [row["responseTime"] for row in scheduler_rows]
+        turnaround_times = [row["turnaroundTime"] for row in scheduler_rows]
+        execution_times = [row["executionTime"] for row in scheduler_rows]
+
+        summaries.append({
+            "scheduler": scheduler,
+            "ordersCompleted": len(scheduler_rows),
+            "meanWaitingTime": mean(waiting_times),
+            "medianWaitingTime": median(waiting_times),
+            "minWaitingTime": min(waiting_times),
+            "maxWaitingTime": max(waiting_times),
+            "p95WaitingTime": percentile(waiting_times, 95),
+            "meanResponseTime": mean(response_times),
+            "medianResponseTime": median(response_times),
+            "meanTurnaroundTime": mean(turnaround_times),
+            "medianTurnaroundTime": median(turnaround_times),
+            "minTurnaroundTime": min(turnaround_times),
+            "maxTurnaroundTime": max(turnaround_times),
+            "p95TurnaroundTime": percentile(turnaround_times, 95),
+            "meanExecutionTime": mean(execution_times),
+            "medianExecutionTime": median(execution_times),
+        })
+
+    return sorted(summaries, key=lambda row: SCHEDULER_ORDER.get(row["scheduler"], 99))
+
+
+def build_overall_scheduler_metrics_by_patron_count(scheduler_summaries):
+    groups = defaultdict(list)
+    for row in scheduler_summaries:
+        groups[row["scheduler"]].append(row)
+
+    summaries = []
+    for scheduler, rows in groups.items():
+        summaries.append({
+            "scheduler": scheduler,
+            "patronCountsIncluded": len(rows),
+            "meanAvgWaitingTime": mean([row["avgWaitingTimeMean"] for row in rows]),
+            "meanMedianWaitingTime": mean([row["medianWaitingTimeMean"] for row in rows]),
+            "meanAvgResponseTime": mean([row["avgResponseTimeMean"] for row in rows]),
+            "meanMedianResponseTime": mean([row["medianResponseTimeMean"] for row in rows]),
+            "meanAvgTurnaroundTime": mean([row["avgTurnaroundTimeMean"] for row in rows]),
+            "meanMedianTurnaroundTime": mean([row["medianTurnaroundTimeMean"] for row in rows]),
+            "meanThroughputOrdersPer1000Ms": mean([
+                row["throughputOrdersPer1000MsMean"] for row in rows
+            ]),
+            "meanFairnessStdDev": mean([row["fairnessStdDevMean"] for row in rows]),
+            "meanMaxWaitingTime": mean([row["maxWaitingTimeMean"] for row in rows]),
+            "meanP95WaitingTime": mean([row["p95WaitingTimeMean"] for row in rows]),
+            "meanMaxPatronTotalWaitingTime": mean([
+                row["maxPatronTotalWaitingTimeMean"] for row in rows
+            ]),
+        })
+
+    return sorted(summaries, key=lambda row: SCHEDULER_ORDER.get(row["scheduler"], 99))
+
+
 def run_sort_key(row):
     return (
         row["noPatrons"],
@@ -383,6 +447,41 @@ SCHEDULER_SUMMARY_COLUMNS = [
     "maxPatronTotalWaitingTimeMean",
 ]
 
+OVERALL_SCHEDULER_METRIC_COLUMNS = [
+    "scheduler",
+    "ordersCompleted",
+    "meanWaitingTime",
+    "medianWaitingTime",
+    "minWaitingTime",
+    "maxWaitingTime",
+    "p95WaitingTime",
+    "meanResponseTime",
+    "medianResponseTime",
+    "meanTurnaroundTime",
+    "medianTurnaroundTime",
+    "minTurnaroundTime",
+    "maxTurnaroundTime",
+    "p95TurnaroundTime",
+    "meanExecutionTime",
+    "medianExecutionTime",
+]
+
+OVERALL_SCHEDULER_BY_PATRON_COUNT_COLUMNS = [
+    "scheduler",
+    "patronCountsIncluded",
+    "meanAvgWaitingTime",
+    "meanMedianWaitingTime",
+    "meanAvgResponseTime",
+    "meanMedianResponseTime",
+    "meanAvgTurnaroundTime",
+    "meanMedianTurnaroundTime",
+    "meanThroughputOrdersPer1000Ms",
+    "meanFairnessStdDev",
+    "meanMaxWaitingTime",
+    "meanP95WaitingTime",
+    "meanMaxPatronTotalWaitingTime",
+]
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -411,6 +510,10 @@ def main():
     run_summaries = build_run_summary(runs)
     patron_summaries = build_patron_summary(runs)
     scheduler_summaries = build_scheduler_summary(run_summaries)
+    overall_scheduler_metrics = build_overall_scheduler_metrics(rows)
+    overall_scheduler_metrics_by_patron_count = (
+        build_overall_scheduler_metrics_by_patron_count(scheduler_summaries)
+    )
 
     write_csv(args.output_dir / "run_summary.csv", RUN_SUMMARY_COLUMNS, run_summaries)
     write_csv(args.output_dir / "patron_summary.csv", PATRON_SUMMARY_COLUMNS, patron_summaries)
@@ -419,12 +522,24 @@ def main():
         SCHEDULER_SUMMARY_COLUMNS,
         scheduler_summaries,
     )
+    write_csv(
+        args.output_dir / "overall_scheduler_metrics.csv",
+        OVERALL_SCHEDULER_METRIC_COLUMNS,
+        overall_scheduler_metrics,
+    )
+    write_csv(
+        args.output_dir / "overall_scheduler_metrics_by_patron_count.csv",
+        OVERALL_SCHEDULER_BY_PATRON_COUNT_COLUMNS,
+        overall_scheduler_metrics_by_patron_count,
+    )
 
     print(f"Read {len(rows)} completed drink orders from {args.input_dir}")
     print(f"Summarised {len(run_summaries)} runs")
     print(f"Wrote {args.output_dir / 'run_summary.csv'}")
     print(f"Wrote {args.output_dir / 'patron_summary.csv'}")
     print(f"Wrote {args.output_dir / 'scheduler_summary.csv'}")
+    print(f"Wrote {args.output_dir / 'overall_scheduler_metrics.csv'}")
+    print(f"Wrote {args.output_dir / 'overall_scheduler_metrics_by_patron_count.csv'}")
 
 
 if __name__ == "__main__":
