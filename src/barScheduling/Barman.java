@@ -7,6 +7,7 @@
  1 = SJF
  2 = Priority
  3 = MLFQ with aging
+ 4 = HRRN (bonus scheduler)
  */
 
 package barScheduling;
@@ -31,6 +32,8 @@ public class Barman extends Thread {
     private LinkedBlockingQueue<DrinkOrder> fcfsQueue;
     private PriorityBlockingQueue<DrinkOrder> sjfQueue;
     private PriorityBlockingQueue<DrinkOrder> priorityQueue;
+    // BONUS HRRN CHANGE: HRRN priorities change as waiting time grows, so use a normal queue and scan it.
+    private LinkedBlockingQueue<DrinkOrder> hrrnQueue;
 
     // MLFQ queues
     private LinkedBlockingQueue<DrinkOrder> q0;
@@ -85,10 +88,15 @@ public class Barman extends Thread {
                 drinksServedPerPatron = new ConcurrentHashMap<Integer, Integer>();
                 break;
 
+            // BONUS HRRN CHANGE: scheduler 4 adds Highest Response Ratio Next.
+            case 4:
+                hrrnQueue = new LinkedBlockingQueue<DrinkOrder>();
+                break;
+
             default:
                 throw new IllegalArgumentException(
                         "Invalid scheduler " + sAlg +
-                        ". Valid values are: 0=FCFS, 1=SJF, 2=Priority, 3=MLFQ."
+                        ". Valid values are: 0=FCFS, 1=SJF, 2=Priority, 3=MLFQ, 4=HRRN."
                 );
         }
     }
@@ -103,10 +111,13 @@ public class Barman extends Thread {
                 return "PRIORITY";
             case 3:
                 return "MLFQ";
+            // BONUS HRRN CHANGE: output file and runId label for the bonus scheduler.
+            case 4:
+                return "HRRN";
             default:
                 throw new IllegalArgumentException(
                         "Invalid scheduler " + schedAlg +
-                        ". Valid values are: 0=FCFS, 1=SJF, 2=Priority, 3=MLFQ."
+                        ". Valid values are: 0=FCFS, 1=SJF, 2=Priority, 3=MLFQ, 4=HRRN."
                 );
         }
     }
@@ -137,10 +148,15 @@ public class Barman extends Thread {
                 enqueueMLFQ(order, level);
                 break;
 
+            // BONUS HRRN CHANGE: enqueue normally; selection happens dynamically when the barman is free.
+            case 4:
+                hrrnQueue.put(order);
+                break;
+
             default:
                 throw new IllegalArgumentException(
                         "Invalid scheduler " + schedAlg +
-                        ". Valid values are: 0=FCFS, 1=SJF, 2=Priority, 3=MLFQ."
+                        ". Valid values are: 0=FCFS, 1=SJF, 2=Priority, 3=MLFQ, 4=HRRN."
                 );
         }
     }
@@ -237,6 +253,37 @@ public class Barman extends Thread {
         }
     }
 
+    // BONUS HRRN CHANGE: choose the order with the highest response ratio.
+    // ratio = (waiting time + service time) / service time
+    private DrinkOrder takeNextHRRNOrder() throws InterruptedException {
+        while (true) {
+            DrinkOrder bestOrder = null;
+            double bestRatio = -1.0;
+            long now = System.currentTimeMillis();
+
+            for (DrinkOrder order : hrrnQueue) {
+                long waitingTime = now - order.getArrivalTime();
+                int serviceTime = order.getExecutionTime();
+                double responseRatio = (waitingTime + serviceTime) / (double) serviceTime;
+
+                if (bestOrder == null
+                        || responseRatio > bestRatio
+                        || (responseRatio == bestRatio
+                            && order.getSequenceNumber() < bestOrder.getSequenceNumber())) {
+                    bestOrder = order;
+                    bestRatio = responseRatio;
+                }
+            }
+
+            if (bestOrder != null && hrrnQueue.remove(bestOrder)) {
+                return bestOrder;
+            }
+
+            TimeUnit.MILLISECONDS.sleep(1);
+        }
+    }
+    // change ends here --------
+
     private void recordServedDrink(DrinkOrder order) {
         if (schedAlg == 3) {
             int patron = order.getOrderer();
@@ -264,10 +311,14 @@ public class Barman extends Thread {
                 case 3:
                     runMLFQ();
                     break;
+                // BONUS HRRN CHANGE: dispatch to the bonus scheduler.
+                case 4:
+                    runHRRN();
+                    break;
                 default:
                     throw new IllegalStateException(
                             "Unexpected scheduler " + schedAlg +
-                            ". Valid values are: 0=FCFS, 1=SJF, 2=Priority, 3=MLFQ."
+                            ". Valid values are: 0=FCFS, 1=SJF, 2=Priority, 3=MLFQ, 4=HRRN."
                     );
             }
 
@@ -314,6 +365,20 @@ public class Barman extends Thread {
         }
     }
 
+    // BONUS HRRN CHANGE: non-preemptive Highest Response Ratio Next scheduler.
+    private void runHRRN() throws InterruptedException, IOException {
+        while (true) {
+            DrinkOrder currentOrder = takeNextHRRNOrder();
+            processOrder(
+                    currentOrder,
+                    "---Barman preparing drink for patron " + currentOrder
+                            + " with HRRN"
+            );
+        }
+    }
+
+    //ends here ----
+
   
 
     private void processOrder(DrinkOrder currentOrder, String startMessage)
@@ -337,10 +402,12 @@ public class Barman extends Thread {
     private void recordCompletedOrder(DrinkOrder order) throws IOException {
     	// THIS IS THE ONLY FUNCTION YOU MAY CHANGE
 
-        new File("results").mkdirs(); // creates directory if it doesnt exist yet
+        // BONUS HRRN CHANGE: keep the default results/ behaviour, but allow bonus runs
+        // to write elsewhere using -Dresults.dir=hrrn_results.
+        String outputDir = System.getProperty("results.dir", "results");
+        new File(outputDir).mkdirs(); // creates directory if it doesnt exist yet
 
-        String filename = "results/" + schedulerName+".csv";
-        File file = new File(filename);
+        File file = new File(outputDir, schedulerName + ".csv");
         boolean isNew = !file.exists();
 
         try(FileWriter file_writter = new FileWriter(file, true)){

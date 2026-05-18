@@ -18,7 +18,7 @@ import java.util.concurrent.CountDownLatch;
 
 public class SchedulingSimulation {
     static int noPatrons = 10;
-    static int sched = 3; // 0=FCFS, 1=SJF, 2=Priority, 3=MLFQ
+    static int sched = 3; // 0=FCFS, 1=SJF, 2=Priority, 3=MLFQ, 4=HRRN bonus
     static int s = 0;
     static long seed = 0;
     static CountDownLatch startSignal;
@@ -33,10 +33,11 @@ public class SchedulingSimulation {
 
  
     private static void validateScheduler(int sched) {
-        if (sched < 0 || sched > 3) {
+        // BONUS HRRN CHANGE: allow scheduler 4 for the optional extension.
+        if (sched < 0 || sched > 4) {
             throw new IllegalArgumentException(
                 "Invalid scheduler " + sched +
-                ". Valid values are: 0=FCFS, 1=SJF, 2=Priority, 3=MLFQ."
+                ". Valid values are: 0=FCFS, 1=SJF, 2=Priority, 3=MLFQ, 4=HRRN."
             );
         }
     }
@@ -51,10 +52,13 @@ public class SchedulingSimulation {
                 return "PRIORITY";
             case 3:
                 return "MLFQ";
+            // BONUS HRRN CHANGE: runId and console label for the bonus scheduler.
+            case 4:
+                return "HRRN";
             default:
                 throw new IllegalArgumentException(
                     "Invalid scheduler " + sched +
-                    ". Valid values are: 0=FCFS, 1=SJF, 2=Priority, 3=MLFQ."
+                    ". Valid values are: 0=FCFS, 1=SJF, 2=Priority, 3=MLFQ, 4=HRRN."
                 );
         }
     }
