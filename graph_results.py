@@ -278,7 +278,7 @@ def add_scheduler_lines(ax, load_summary, column):
             label=scheduler,
         )
 
-    ax.set_xlabel("Number of patrons")
+    ax.set_xlabel("Number of patrons in run")
     ax.set_xticks(sorted(load_summary["noPatrons"].unique()))
     ax.margins(x=0.03, y=0.08)
     polish_axes(ax)
@@ -314,19 +314,19 @@ def add_scheduler_legend(fig, y=-0.01):
 def plot_core_metric_group(load_summary, output_dir, metric_type):
     if metric_type == "mean":
         metrics = [
-            ("waitingMean", "Mean Order Waiting Time", "Time (ms)"),
-            ("responseMean", "Mean Response Time", "Time (ms)"),
-            ("turnaroundMean", "Mean Turnaround Time", "Time (ms)"),
-            ("patronWaitingMean", "Mean Total Patron Waiting Time", "Time (ms)"),
+            ("waitingMean", "Mean Per-Order Waiting Time", "Mean waiting time per order (ms)"),
+            ("responseMean", "Mean Per-Order Response Time", "Mean response time per order (ms)"),
+            ("turnaroundMean", "Mean Per-Order Turnaround Time", "Mean turnaround time per order (ms)"),
+            ("patronWaitingMean", "Mean Total Waiting Time per Patron", "Mean total waiting time per patron (ms)"),
         ]
         title = "Mean Core Metrics by Load"
         filename = "01_core_metrics_mean.png"
     elif metric_type == "median":
         metrics = [
-            ("waitingMedian", "Median Order Waiting Time", "Time (ms)"),
-            ("responseMedian", "Median Response Time", "Time (ms)"),
-            ("turnaroundMedian", "Median Turnaround Time", "Time (ms)"),
-            ("patronWaitingMedian", "Median Total Patron Waiting Time", "Time (ms)"),
+            ("waitingMedian", "Median Per-Order Waiting Time", "Median waiting time per order (ms)"),
+            ("responseMedian", "Median Per-Order Response Time", "Median response time per order (ms)"),
+            ("turnaroundMedian", "Median Per-Order Turnaround Time", "Median turnaround time per order (ms)"),
+            ("patronWaitingMedian", "Median Total Waiting Time per Patron", "Median total waiting time per patron (ms)"),
         ]
         title = "Median Core Metrics by Load"
         filename = "02_core_metrics_median.png"
@@ -392,26 +392,26 @@ def plot_distributions(data, patron_summary, output_dir):
     boxplot_by_scheduler(
         axes[0, 0],
         {s: data.loc[data["scheduler"] == s, "waitingTime"] for s in SCHEDULERS},
-        "Order Waiting Time Distribution",
-        "Time (ms)",
+        "Per-Order Waiting Time Distribution",
+        "Waiting time per order (ms)",
     )
     boxplot_by_scheduler(
         axes[0, 1],
         {s: data.loc[data["scheduler"] == s, "responseTime"] for s in SCHEDULERS},
-        "Response Time Distribution",
-        "Time (ms)",
+        "Per-Order Response Time Distribution",
+        "Response time per order (ms)",
     )
     boxplot_by_scheduler(
         axes[1, 0],
         {s: data.loc[data["scheduler"] == s, "turnaroundTime"] for s in SCHEDULERS},
-        "Turnaround Time Distribution",
-        "Time (ms)",
+        "Per-Order Turnaround Time Distribution",
+        "Turnaround time per order (ms)",
     )
     boxplot_by_scheduler(
         axes[1, 1],
         {s: patron_summary.loc[patron_summary["scheduler"] == s, "totalWaitingTime"] for s in SCHEDULERS},
-        "Total Patron Waiting Time Distribution",
-        "Time (ms)",
+        "Total Waiting Time per Patron Distribution",
+        "Total waiting time per patron per run (ms)",
     )
 
     fig.tight_layout(rect=(0, 0, 1, 1), h_pad=2.0, w_pad=2.0)
@@ -422,14 +422,14 @@ def plot_throughput(run_summary, load_summary, output_dir):
     fig, axes = plt.subplots(1, 2, figsize=(12.2, 5.0))
 
     add_scheduler_lines(axes[0], load_summary, "throughput")
-    axes[0].set_title("Mean Throughput by Load")
-    axes[0].set_ylabel("Orders completed per 1000 ms")
+    axes[0].set_title("Mean Throughput by Patron Count")
+    axes[0].set_ylabel("Completed orders per 1000 ms")
 
     boxplot_by_scheduler(
         axes[1],
         {s: run_summary.loc[run_summary["scheduler"] == s, "throughput"] for s in SCHEDULERS},
-        "Throughput Distribution Across Runs",
-        "Orders completed per 1000 ms",
+        "Run Throughput Distribution",
+        "Completed orders per 1000 ms",
     )
 
     scheduler_handles = [
@@ -443,10 +443,10 @@ def plot_throughput(run_summary, load_summary, output_dir):
 
 def plot_quality_metrics(load_summary, output_dir):
     metrics = [
-        ("turnaroundStd", "Predictability", "Std. dev. of turnaround time (ms)"),
-        ("patronWaitingStd", "Fairness", "Std. dev. of total patron waiting time (ms)"),
-        ("p95Waiting", "Starvation Risk: 95th Percentile Wait", "Time (ms)"),
-        ("maxWaiting", "Starvation Risk: Maximum Order Wait", "Time (ms)"),
+        ("turnaroundStd", "Predictability: Per-Order Turnaround Variation", "Std. dev. of per-order turnaround time (ms)"),
+        ("patronWaitingStd", "Fairness: Variation in Total Waiting per Patron", "Std. dev. of total patron waiting time (ms)"),
+        ("p95Waiting", "Starvation Risk: 95th Percentile Per-Order Wait", "95th percentile per-order waiting time (ms)"),
+        ("maxWaiting", "Starvation Risk: Maximum Per-Order Wait", "Maximum per-order waiting time (ms)"),
     ]
 
     fig, axes = plt.subplots(2, 2, figsize=(12.2, 7.8), sharex=True)
