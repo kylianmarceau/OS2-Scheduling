@@ -33,7 +33,7 @@ public class SchedulingSimulation {
 
  
     private static void validateScheduler(int sched) {
-        // BONUS HRRN CHANGE: allow scheduler 4 for the optional extension.
+        // BONUS HRRN CHANGE!!! allow scheduler 4 for the optional extension.
         if (sched < 0 || sched > 4) {
             throw new IllegalArgumentException(
                 "Invalid scheduler " + sched +
@@ -52,7 +52,7 @@ public class SchedulingSimulation {
                 return "PRIORITY";
             case 3:
                 return "MLFQ";
-            // BONUS HRRN CHANGE: runId and console label for the bonus scheduler.
+            // BONUS HRRN CHANGE! runId and console label for the bonus scheduler.
             case 4:
                 return "HRRN";
             default:
