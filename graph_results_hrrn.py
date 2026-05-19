@@ -356,6 +356,11 @@ def save_figure(fig, path):
     plt.close(fig)
 
 
+def save_table_figure(fig, path):
+    fig.savefig(path, dpi=200, bbox_inches="tight", pad_inches=0.04, facecolor="#ffffff")
+    plt.close(fig)
+
+
 def scheduler_rows(frame, scheduler):
     return frame[frame["scheduler"] == scheduler].sort_values("noPatrons")
 
@@ -609,9 +614,10 @@ def plot_metric_summary_table(run_summary, output_dir):
             previous_group = group
         cell_text.append(["  " + label] + [format_number(summary.loc[scheduler, column]) for scheduler in SCHEDULERS])
 
-    fig_height = max(7.6, 0.34 * len(cell_text) + 1.4)
+    fig_height = 0.31 * (len(cell_text) + 1)
     fig, ax = plt.subplots(figsize=(13.3, fig_height))
     fig.patch.set_facecolor("#ffffff")
+    ax.set_position([0, 0, 1, 1])
     ax.axis("off")
 
     table = ax.table(
@@ -619,7 +625,7 @@ def plot_metric_summary_table(run_summary, output_dir):
         colLabels=["Metric"] + SCHEDULERS,
         cellLoc="right",
         colLoc="center",
-        loc="center",
+        bbox=[0, 0, 1, 1],
         colWidths=[0.42, 0.112, 0.112, 0.112, 0.112, 0.112],
     )
     table.auto_set_font_size(False)
@@ -664,8 +670,7 @@ def plot_metric_summary_table(run_summary, output_dir):
             cell.get_text().set_ha("right")
             cell.PAD = 0.04
 
-    fig.tight_layout(pad=0.3)
-    save_figure(fig, output_dir / "06_metric_summary_table_with_hrrn.png")
+    save_table_figure(fig, output_dir / "06_metric_summary_table_with_hrrn.png")
 
 
 def print_required_summary(data, run_summary, output_dir):
