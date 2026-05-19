@@ -32,8 +32,10 @@ public class Barman extends Thread {
     private LinkedBlockingQueue<DrinkOrder> fcfsQueue;
     private PriorityBlockingQueue<DrinkOrder> sjfQueue;
     private PriorityBlockingQueue<DrinkOrder> priorityQueue;
-    // BONUS HRRN CHANGE: HRRN priorities change as waiting time grows, so use a normal queue and scan it.
+
+    //CHANGE-----------------------------------------------------------------
     private LinkedBlockingQueue<DrinkOrder> hrrnQueue;
+    //----------------------------------------------------------------- HRRN
 
     // MLFQ queues
     private LinkedBlockingQueue<DrinkOrder> q0;
@@ -88,7 +90,7 @@ public class Barman extends Thread {
                 drinksServedPerPatron = new ConcurrentHashMap<Integer, Integer>();
                 break;
 
-            // BONUS HRRN CHANGE: scheduler 4 adds Highest Response Ratio Next.
+            // //CHANGE----------add scheduler 4 for bonus hrrn-------------------------------------------------------
             case 4:
                 hrrnQueue = new LinkedBlockingQueue<DrinkOrder>();
                 break;
@@ -111,7 +113,7 @@ public class Barman extends Thread {
                 return "PRIORITY";
             case 3:
                 return "MLFQ";
-            // BONUS HRRN CHANGE: output file and runId label for the bonus scheduler.
+            //CHANGE----------add scheduler 4 for bonus hrrn-------------------------------------------------------
             case 4:
                 return "HRRN";
             default:
@@ -148,7 +150,7 @@ public class Barman extends Thread {
                 enqueueMLFQ(order, level);
                 break;
 
-            // BONUS HRRN CHANGE: enqueue normally; selection happens dynamically when the barman is free.
+            // CHANGE HRRN, enqueue normally,  selection happens dynamically when the barman is free
             case 4:
                 hrrnQueue.put(order);
                 break;
@@ -253,7 +255,7 @@ public class Barman extends Thread {
         }
     }
 
-    // BONUS HRRN CHANGE: choose the order with the highest response ratio.
+    // CHANGE HRRN: choose the order with the highest response ratio
     // ratio = (waiting time + service time) / service time
     private DrinkOrder takeNextHRRNOrder() throws InterruptedException {
         while (true) {
@@ -365,7 +367,7 @@ public class Barman extends Thread {
         }
     }
 
-    // BONUS HRRN CHANGE: non-preemptive Highest Response Ratio Next scheduler.
+    // BONUS HRRN CHANGE  non preemptive Highest Response Ratio Next scheduler
     private void runHRRN() throws InterruptedException, IOException {
         while (true) {
             DrinkOrder currentOrder = takeNextHRRNOrder();
@@ -402,10 +404,10 @@ public class Barman extends Thread {
     private void recordCompletedOrder(DrinkOrder order) throws IOException {
     	// THIS IS THE ONLY FUNCTION YOU MAY CHANGE
 
-        // BONUS HRRN CHANGE: keep the default results/ behaviour, but allow bonus runs
-        // to write elsewhere using -Dresults.dir=hrrn_results.
+        // BONUS HRRN(new scheduler) CHANGE: keep the default results/ behaviour, but allow bonus runs
+        // to write elsewhere using -Dresults.dir=hrrn_results
         String outputDir = System.getProperty("results.dir", "results");
-        new File(outputDir).mkdirs(); // creates directory if it doesnt exist yet
+        new File(outputDir).mkdirs(); // create directory if it doesnt exist yet
 
         File file = new File(outputDir, schedulerName + ".csv");
         boolean isNew = !file.exists();
@@ -414,12 +416,12 @@ public class Barman extends Thread {
             if(isNew){
                 file_writter.write("runId,scheduler,noPatrons,switchTime,seed,patronID,drinkName,executionTime,arrivalTime,serviceStartTime,completionTime,waitingTime,responseTime,turnaroundTime,queueLevel\n");
             }
-
             long simStartTime = SchedulingSimulation.simStartTime;
             long arrivalTime = order.getArrivalTime() - simStartTime;
             long serviceStartTime = order.getServiceStartTime() - simStartTime;
             long completionTime = order.getCompletionTime() - simStartTime;
 
+            // write to the csv 
             file_writter.write(
                 SchedulingSimulation.runId + "," +
                 schedulerName + "," +
